@@ -33,7 +33,7 @@
     .sidebar {
       width: 72px; flex-shrink: 0; background: var(--bg-fill); border-right: 1px solid var(--border);
       display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 16px;
-      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 10;
     }
     .sidebar-segment { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .sidebar-icon-wrap { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -46,7 +46,7 @@
     .sidebar-spacer { flex: 1; }
     .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: #c0c6dd; }
 
-    .main { flex: 1; min-width: 0; border-left: 1px solid var(--border); overflow-x: auto; }
+    .main { flex: 1; min-width: 0; border-left: 1px solid var(--border); overflow-x: auto; position: relative; z-index: 20; }
     .header { height: 52px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .header-left { display: flex; align-items: center; gap: 16px; }
     .header-title { font-family: var(--font-lexend); font-size: 20px; font-weight: 500; line-height: 28px; color: var(--text); margin: 0; }
@@ -110,7 +110,7 @@
     .stage-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #555b65; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .stage-checkbox.checked { background: #369eff; border-color: #369eff; }
 
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 8px 0 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 8px 0 16px; }
     .kpi-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
     .kpi-card .label-row { display: flex; align-items: center; gap: 4px; }
     .kpi-card .label { font-family: var(--font-inter); font-size: 12px; font-weight: 500; line-height: 16px; color: var(--text-secondary); }
@@ -118,8 +118,7 @@
     .kpi-card:hover .kpi-info-btn { opacity: 1; pointer-events: auto; }
     .kpi-info-btn svg { color: var(--text-subdued); cursor: pointer; }
     .kpi-info-btn svg:hover { color: var(--text-secondary); }
-    .kpi-info-btn .info-tooltip { bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 300px; }
-    .kpi-info-btn:hover .info-tooltip { opacity: 1; }
+    .kpi-info-btn .info-tooltip { display: none; }
     .info-tooltip strong { color: var(--text); font-weight: 500; }
     .info-tooltip p { margin: 0 0 8px 0; }
     .info-tooltip p:last-child { margin-bottom: 0; }
@@ -131,8 +130,8 @@
     .kpi-card .change.up { color: var(--text-secondary); }
     .kpi-card .description { font-family: var(--font-inter); font-size: 12px; font-weight: 400; line-height: 16px; color: var(--text-subdued); }
 
-    .chart-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 24px; }
-    .chart-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .chart-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 16px; }
+    .chart-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
     .chart-card-title { font-family: var(--font-inter); font-size: 13px; font-weight: 500; line-height: 16px; color: var(--text); margin: 0; }
     .chart-card-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
     .chart-card:hover .chart-card-actions { opacity: 1; pointer-events: auto; }
@@ -140,7 +139,7 @@
     .chart-action-btn:hover { background: var(--bg-fill-secondary-hover); color: var(--text); }
     .chart-header-info { opacity: 0; pointer-events: none; transition: opacity 0.15s; position: relative; }
     .chart-card:hover .chart-header-info { opacity: 1; pointer-events: auto; }
-    .info-tooltip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: 280px; background: #1e2129; border: 1px solid #43474f; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: normal; }
+    .info-tooltip { position: fixed; width: 420px; background: #1e2129; border: 1px solid #43474f; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: normal; }
     .info-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #43474f; }
     .info-tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1e2129; margin-top: -1px; z-index: 1; }
     .chart-header-info:hover .info-tooltip { opacity: 1; }
@@ -185,7 +184,7 @@
     .legend-breakdown-row { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-family: var(--font-inter); font-size: 12px; font-weight: 400; line-height: 16px; color: var(--text-secondary); }
     .legend-breakdown-row .fill { flex: 1; min-width: 20px; height: 1px; background: var(--border); }
 
-    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     .donut-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 512px; }
     .donut-card-header { display: flex; align-items: center; gap: 8px; align-self: stretch; margin-bottom: 12px; }
     .donut-card .donut-title { font-family: var(--font-inter); font-size: 13px; font-weight: 500; line-height: 16px; color: var(--text); margin: 0; }
@@ -196,10 +195,10 @@
     .donut-wrapper { position: relative; width: 238px; height: 238px; flex-shrink: 0; }
     .donut-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: var(--font-lexend); font-size: 20px; font-weight: 500; line-height: 28px; letter-spacing: 0; color: var(--text); text-align: center; }
     .donut-legend { width: 100%; max-width: 620px; margin-top: 24px; display: flex; flex-direction: column; gap: 0; }
-    .donut-legend-row { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px; min-height: 24px; padding: 4px 0; border-bottom: 1px dotted var(--border); }
+    .donut-legend-row { display: flex; align-items: center; gap: 4px; height: 32px; padding-left: 16px; border-bottom: 1px solid var(--border); }
     .donut-legend-row:last-child { border-bottom: none; }
     .donut-legend-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
-    .donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-left: -16px; }
     .donut-legend-dot.hatch-dark { background: #616161; }
     .donut-legend-dot.hatch-light { background: #bdbdbd; }
     .donut-legend-fill { flex: 1; min-width: 20px; height: 1px; background: transparent; }
@@ -380,12 +379,12 @@
 
         <div class="kpi-grid">
           <div class="kpi-card">
-            <div class="label-row"><span class="label">Delivery capacity</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Lower than expected may signal high time off, holidays, or reduced headcount.</p><p><strong>Delivery capacity</strong> = gross capacity − time off − public holidays.</p></div></div></div>
+            <div class="label-row"><span class="label">Delivery capacity</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Lower than expected may signal high time off or reduced headcount.</p><p><strong>Delivery capacity</strong> = gross capacity − approved time off.</p></div></div></div>
             <div class="value-row"><span class="value">83%</span><span class="sub-value">28,981h</span><span class="change down"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M0 0l5 6 5-6H0z"/></svg>10%</span></div>
             <span class="description">Net of 65 days time off</span>
           </div>
           <div class="kpi-card">
-            <div class="label-row"><span class="label">Time offs</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Higher than planned may signal upcoming capacity pressure or risk of burnout.</p><p><strong>Time offs</strong> = sum of all approved leave days for the period.</p></div></div></div>
+            <div class="label-row"><span class="label">Time offs</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Tracks approved leave taken by your team. Higher than planned may signal scheduling pressure or an indication that more cover is needed on active projects.</p><p><strong>Time offs</strong> = sum of all approved leave days for the period.</p></div></div></div>
             <div class="value-row"><span class="value">65 days</span><span class="change down"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M0 0l5 6 5-6H0z"/></svg>10%</span></div>
             <span class="description">46 additional days requested</span>
           </div>
@@ -442,7 +441,7 @@
                 <path id="cap-delivery-line" d="M 0 25 L 25 26 L 50 24 L 75 24.5 L 100 25" fill="none" stroke="#6ad2ff" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <path id="cap-scheduled-line" d="M 0 62.5 L 25 62.5 L 50 62.5 L 75 63 L 100 62.5" fill="none" stroke="#e24856" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <!-- Hover line -->
-                <line id="capacity-hover-line" x1="0" y1="0" x2="0" y2="100" stroke="#ffffff" stroke-width="0.5" opacity="0.3" style="display:none"/>
+                <line id="capacity-hover-line" x1="0" y1="0" x2="0" y2="100" stroke="#ffffff" stroke-width="1" opacity="0.25" vector-effect="non-scaling-stroke" style="display:none"/>
               </svg>
               <div id="capacity-tooltip" class="chart-tooltip"></div>
               <div id="cap-x-labels" class="chart-x-labels"><span>1 Dec</span><span>8 Dec</span><span>15 Dec</span><span>22 Dec</span><span>29 Dec</span></div>
@@ -484,24 +483,25 @@
                     <line x1="0" y1="0" x2="0" y2="6" stroke="#8a8a8a" stroke-width="1"/>
                   </pattern>
                 </defs>
-                <!-- Unassigned 20% – uniform 2px gap at inner & outer -->
-                <path d="M 121.99 0.2 A 119 119 0 0 1 231.48 79.32 L 201.07 88.1 A 87 87 0 0 0 121 31.98 Z" fill="#b39ddb" class="donut-segment" data-label="Unassigned roles" data-count="2" data-b1-label="Billable" data-b1-val="1,600h" data-b2-label="Non-billable" data-b2-val="400h" data-color="#b39ddb"/>
+                <!-- Employees 60% solid -->
+                <path d="M 121.08 0.02 A 119 119 0 1 1 50.74 216.48 L 69.10 190.27 A 87 87 0 1 0 120.52 32.01 Z" fill="#5c6bc0" class="donut-segment" data-label="Employees" data-count="48" data-b1-label="Billable" data-b1-val="15,000h" data-b2-label="Non-billable" data-b2-val="10,000h" data-color="#5c6bc0"/>
                 <!-- Contractors 15% -->
-                <path d="M 232.77 84.14 A 119 119 0 0 1 216.52 187.22 L 190.53 168.43 A 87 87 0 0 0 202.26 93.64 Z" fill="#7e57c2" class="donut-segment" data-label="Contractors" data-count="24" data-b1-label="Billable" data-b1-val="1,200h" data-b2-label="Non-billable" data-b2-val="300h" data-color="#7e57c2"/>
+                <path d="M 47.38 214.04 A 119 119 0 0 1 0.02 121.08 L 32.01 120.52 A 87 87 0 0 0 66.64 188.48 Z" fill="#7e57c2" class="donut-segment" data-label="Contractors" data-count="24" data-b1-label="Billable" data-b1-val="1,200h" data-b2-label="Non-billable" data-b2-val="300h" data-color="#7e57c2"/>
                 <!-- Placeholders 5% light grey hatched -->
-                <path d="M 214.12 190.54 A 119 119 0 0 1 190.68 213.88 L 171.77 188.17 A 87 87 0 0 0 188.21 171.65 Z" fill="#bdbdbd" class="donut-segment" data-label="Placeholders" data-count="6" data-b1-label="Billable" data-b1-val="400h" data-b2-label="Non-billable" data-b2-val="100h" data-color="#bdbdbd"/>
-                <path d="M 214.12 190.54 A 119 119 0 0 1 190.68 213.88 L 171.77 188.17 A 87 87 0 0 0 188.21 171.65 Z" fill="url(#donutHatchLight)"/>
-                <!-- Employees 60% dark grey hatched -->
-                <path d="M 187.38 215.98 A 119 119 0 1 1 116.92 0.21 L 116.91 32.48 A 87 87 0 1 0 168.65 188.98 Z" fill="#616161" class="donut-segment" data-label="Employees" data-count="48" data-b1-label="Billable" data-b1-val="15,000h" data-b2-label="Non-billable" data-b2-val="10,000h" data-color="#616161"/>
-                <path d="M 187.38 215.98 A 119 119 0 1 1 116.92 0.21 L 116.91 32.48 A 87 87 0 1 0 168.65 188.98 Z" fill="url(#donutHatchDark)"/>
+                <path d="M 0.02 116.92 A 119 119 0 0 1 5.20 84.21 L 35.80 93.56 A 87 87 0 0 0 32.01 117.48 Z" fill="#bdbdbd" class="donut-segment" data-label="Placeholders" data-count="6" data-b1-label="Billable" data-b1-val="400h" data-b2-label="Non-billable" data-b2-val="100h" data-color="#bdbdbd"/>
+                <path d="M 0.02 116.92 A 119 119 0 0 1 5.20 84.21 L 35.80 93.56 A 87 87 0 0 0 32.01 117.48 Z" fill="url(#donutHatchLight)" pointer-events="none"/>
+                <!-- Unassigned roles 20% greyed out hatched -->
+                <path d="M 6.48 80.26 A 119 119 0 0 1 116.92 0.02 L 117.48 32.01 A 87 87 0 0 0 36.74 90.68 Z" fill="#9e9e9e" class="donut-segment" data-label="Unassigned roles" data-count="2" data-b1-label="Billable" data-b1-val="1,600h" data-b2-label="Non-billable" data-b2-val="400h" data-color="#9e9e9e"/>
+                <path d="M 6.48 80.26 A 119 119 0 0 1 116.92 0.02 L 117.48 32.01 A 87 87 0 0 0 36.74 90.68 Z" fill="url(#donutHatchLight)" pointer-events="none"/>
               </svg>
               <div class="donut-center">10,000h</div>
             </div>
             <div class="donut-legend">
-              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot hatch-dark"></span>Employees (48)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">6,000h</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#5c6bc0"></span>Employees (48)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">6,000h</span><span class="donut-legend-change">▲ 3%</span></div>
               <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#7e57c2"></span>Contractors (24)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">1,500h</span><span class="donut-legend-change">▲ 3%</span></div>
               <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot hatch-light"></span>Placeholders (6)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">500h</span><span class="donut-legend-change">▲ 3%</span></div>
-              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#b39ddb"></span>Unassigned roles (2)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">2,000h</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot hatch-light"></span>Unassigned roles (2)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">2,000h</span><span class="donut-legend-change">▲ 3%</span></div>
+
             </div>
           </div>
           <div class="donut-card">
@@ -581,7 +581,7 @@
                 <path id="util-util-line" d="M 0 47 C 8 44, 17 32, 25 35 C 33 38, 42 22, 50 25 C 58 28, 67 38, 75 35 C 83 33, 92 38, 100 38" fill="none" stroke="#6ad2ff" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <path id="util-bill-line" d="M 0 53 C 8 53, 17 51, 25 51 C 33 51, 42 41, 50 42 C 58 43, 67 57, 75 58 C 83 59, 92 62, 100 62" fill="none" stroke="#e24856" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
                 <!-- Hover line -->
-                <line id="util-hover-line" x1="0" y1="0" x2="0" y2="100" stroke="#ffffff" stroke-width="0.5" opacity="0.3" style="display:none"/>
+                <line id="util-hover-line" x1="0" y1="0" x2="0" y2="100" stroke="#ffffff" stroke-width="1" opacity="0.25" vector-effect="non-scaling-stroke" style="display:none"/>
               </svg>
               <div id="util-tooltip" class="chart-tooltip"></div>
               <div id="util-x-labels" class="chart-x-labels"><span>1 Dec</span><span>8 Dec</span><span>15 Dec</span><span>22 Dec</span><span>29 Dec</span></div>
@@ -612,6 +612,7 @@
       </div>
     </main>
   </div>
+  <div class="donut-tip" id="donut-tip"><div class="donut-tip-title" id="donut-tip-title"></div><div class="donut-tip-row" id="donut-tip-r1"><span class="donut-tip-row-label" id="donut-tip-l1"></span><span class="donut-tip-row-dots"></span><span class="donut-tip-row-val" id="donut-tip-v1"></span></div><div class="donut-tip-row" id="donut-tip-r2"><span class="donut-tip-row-label" id="donut-tip-l2"></span><span class="donut-tip-row-dots"></span><span class="donut-tip-row-val" id="donut-tip-v2"></span></div></div>
 <script>
   // ── Data ──────────────────────────────────────────────────────────────────
 
@@ -1067,9 +1068,9 @@
   function updatePtypeLabel() {
     const label = document.getElementById('ptype-filter-label');
     const ordered = ptypeOptions.filter(s => selectedPtypes.has(s));
-    label.textContent = ordered.length === 0 ? ': None'
-      : ordered.length === ptypeOptions.length ? ': All'
-      : ': ' + (ordered.length <= 2 ? ordered.join(', ') : ordered.length + ' selected');
+    label.textContent = ordered.length === 0 ? 'None'
+      : ordered.length === ptypeOptions.length ? 'All'
+      : (ordered.length <= 2 ? ordered.join(', ') : ordered.length + ' selected');
   }
 
   function togglePtype(opt) {
@@ -1097,9 +1098,9 @@
   function updateToffLabel() {
     const label = document.getElementById('toff-filter-label');
     const ordered = toffOptions.filter(s => selectedToff.has(s));
-    label.textContent = ordered.length === 0 ? ': None'
-      : ordered.length === toffOptions.length ? ': All'
-      : ': ' + (ordered.length <= 2 ? ordered.join(', ') : ordered.length + ' selected');
+    label.textContent = ordered.length === 0 ? 'None'
+      : ordered.length === toffOptions.length ? 'All'
+      : (ordered.length <= 2 ? ordered.join(', ') : ordered.length + ' selected');
   }
 
   function toggleToff(opt) {
@@ -1119,6 +1120,36 @@
 
   renderPtypeDropdown();
   renderToffDropdown();
+
+  // KPI info-btn tooltips (fixed position to escape overflow clipping)
+  (function() {
+    var active = null;
+    document.querySelectorAll('.kpi-info-btn').forEach(function(btn) {
+      var tip = btn.querySelector('.info-tooltip');
+      if (!tip) return;
+      tip.style.display = 'block';
+      tip.style.opacity = '0';
+      tip.style.pointerEvents = 'none';
+
+      btn.addEventListener('mouseenter', function() {
+        var r = btn.getBoundingClientRect();
+        var tipW = 420;
+        var left = r.left + r.width / 2 - tipW / 2;
+        // clamp so it stays within viewport
+        left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+        var top = r.top - 10; // will be positioned above via transform
+        tip.style.left = left + 'px';
+        tip.style.top = (r.top - tip.offsetHeight - 10) + 'px';
+        tip.style.opacity = '1';
+        active = tip;
+      });
+
+      btn.addEventListener('mouseleave', function() {
+        tip.style.opacity = '0';
+        active = null;
+      });
+    });
+  })();
 
   // Donut segment tooltips
   (function() {
@@ -1193,6 +1224,5 @@
 
 </script>
 
-  <div class="donut-tip" id="donut-tip"><div class="donut-tip-title" id="donut-tip-title"></div><div class="donut-tip-row" id="donut-tip-r1"><span class="donut-tip-row-label" id="donut-tip-l1"></span><span class="donut-tip-row-dots"></span><span class="donut-tip-row-val" id="donut-tip-v1"></span></div><div class="donut-tip-row" id="donut-tip-r2"><span class="donut-tip-row-label" id="donut-tip-l2"></span><span class="donut-tip-row-dots"></span><span class="donut-tip-row-val" id="donut-tip-v2"></span></div></div>
 </body>
 </html>

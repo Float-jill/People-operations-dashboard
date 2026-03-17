@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>People Operations Dashboard – Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Lexend:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-fill: #0f1115;
+      --bg-fill-secondary: #262a31;
+      --bg-fill-secondary-hover: #2d3138;
+      --bg-fill-secondary-pressed: #43474f;
+      --bg-fill-tertiary: #363a41;
+      --bg-surface: #1a1c21;
+      --border: #2d3138;
+      --button-border: #43474f;
+      --text: #fafbfd;
+      --text-secondary: #ced5e0;
+      --text-subdued: #7b7f88;
+      --text-success: #71d083;
+      --text-danger: #e24856;
+      --accent: #369eff;
+      --font-lexend: 'Lexend', sans-serif;
+      --font-inter: 'Inter', sans-serif;
+      --shadow-1: 0 0 9px rgba(9,30,66,0.08), 0 1px 1px rgba(95,106,126,0.1);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: var(--font-inter); font-size: 13px; background: var(--bg-fill); color: var(--text); -webkit-font-smoothing: antialiased; }
+    .app { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 72px; flex-shrink: 0; background: var(--bg-fill); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 16px;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-segment { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .sidebar-icon-wrap { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .sidebar-icon-wrap.active { background: var(--bg-fill-secondary-pressed); }
+    .sidebar-icon-wrap:not(.active):hover { background: var(--bg-fill-secondary-hover); }
+    .sidebar-icon { width: 24px; height: 24px; color: var(--text); }
+    .sidebar-label { font-size: 10px; font-weight: 500; color: var(--text-secondary); text-align: center; }
+    .sidebar-segment:first-child .sidebar-label { color: var(--text); }
+    .sidebar-divider { width: 32px; height: 1px; background: var(--border); }
+    .sidebar-spacer { flex: 1; }
+    .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: #c0c6dd; }
+
+    .main { flex: 1; min-width: 0; border-left: 1px solid var(--border); overflow-x: auto; }
+    .header { height: 52px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-family: var(--font-lexend); font-size: 20px; font-weight: 500; line-height: 28px; color: var(--text); margin: 0; }
+    .tabs { display: flex; gap: 2px; padding: 2px; background: var(--bg-fill-secondary-hover); border-radius: 8px; }
+    .tab { padding: 7px 12px 8px; font-size: 12px; font-weight: 500; color: var(--text-secondary); background: none; border: none; border-radius: 6px; cursor: pointer; font-family: var(--font-inter); }
+    .tab.active { background: var(--bg-fill); color: var(--text); box-shadow: var(--shadow-1); }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .btn-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: none; background: transparent; color: var(--text); cursor: pointer; }
+    .btn-icon:hover { background: var(--bg-fill-secondary-hover); }
+    .btn-dropdown { height: 28px; padding: 4px 6px; display: flex; align-items: center; gap: 2px; border-radius: 6px; border: 1px solid var(--button-border); background: transparent; color: var(--text); font-size: 12px; font-weight: 500; font-family: var(--font-inter); cursor: pointer; }
+    .btn-dropdown .accent { color: var(--accent); }
+
+    .content { padding: 0 24px 24px; }
+    .controls { height: 44px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .controls-left { display: flex; gap: 8px; align-items: center; }
+
+
+    /* Donut segment tooltip */
+    .donut-tip {
+      position: fixed; z-index: 900; pointer-events: none;
+      background: #1a1d24; border-radius: 14px;
+      padding: 14px 16px; min-width: 230px;
+      box-shadow: 0 8px 36px rgba(0,0,0,0.65);
+      display: none;
+    }
+    .donut-tip.visible { display: block; }
+    .donut-tip-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; font-family: var(--font-inter); }
+    .donut-tip-row { display: flex; align-items: baseline; gap: 6px; margin-top: 7px; }
+    .donut-tip-row-label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; font-family: var(--font-inter); }
+    .donut-tip-row-dots { flex: 1; border-bottom: 1.5px dotted rgba(255,255,255,0.18); min-width: 24px; margin-bottom: 3px; }
+    .donut-tip-row-val { font-size: 13px; color: var(--text); font-weight: 500; white-space: nowrap; font-family: var(--font-inter); }
+    .donut-segment { cursor: pointer; transition: opacity 0.12s; }
+    .donut-segment:hover { opacity: 0.82; }
+
+    /* Filter dropdown */
+    .filter-wrap { position: relative; }
+    .filter-dropdown {
+      position: absolute; top: calc(100% + 6px); left: 0; z-index: 600;
+      background: #1e2129; border: 1px solid var(--border); border-radius: 14px;
+      min-width: 280px; overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.65);
+      display: none;
+    }
+    .filter-dropdown.open { display: block; }
+    .filter-search-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .filter-search-icon { color: var(--text-subdued); flex-shrink: 0; }
+    .filter-search-input { background: none; border: none; outline: none; color: var(--text); font-size: 14px; font-family: var(--font-inter); width: 100%; }
+    .filter-search-input::placeholder { color: var(--text-subdued); }
+    .filter-section { padding: 6px 0; }
+    .filter-sep { height: 1px; background: var(--border); }
+    .filter-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text); }
+    .filter-item:hover { background: var(--bg-fill-secondary-hover); }
+    .filter-item-icon { width: 20px; height: 20px; color: var(--text-secondary); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+
+    .btn-filter { height: 28px; padding: 4px 6px; display: flex; align-items: center; gap: 4px; border-radius: 6px; background: var(--bg-fill-tertiary); border: none; color: var(--text); font-size: 12px; font-weight: 500; font-family: var(--font-inter); cursor: pointer; }
+    .stage-filter-wrap { position: relative; }
+    .stage-dropdown { position: absolute; top: calc(100% + 4px); left: 0; background: #1a1d24; border: 1px solid #43474f; border-radius: 14px; padding: 6px; min-width: 280px; z-index: 300; display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+    .stage-dropdown.open { display: block; }
+    .stage-dropdown-item { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 11px 14px; border: none; background: none; color: var(--text); font-size: 14px; font-weight: 400; font-family: var(--font-inter); cursor: pointer; border-radius: 8px; text-align: left; }
+    .stage-dropdown-item:hover { background: var(--bg-fill-secondary-hover); }
+    .stage-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #555b65; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .stage-checkbox.checked { background: #369eff; border-color: #369eff; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 8px 0 24px; }
+    .kpi-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .kpi-card .label-row { display: flex; align-items: center; gap: 4px; }
+    .kpi-card .label { font-family: var(--font-inter); font-size: 12px; font-weight: 500; line-height: 16px; color: var(--text-secondary); }
+    .kpi-card .kpi-info-btn { opacity: 0; pointer-events: none; transition: opacity 0.15s; position: relative; display: flex; align-items: center; }
+    .kpi-card:hover .kpi-info-btn { opacity: 1; pointer-events: auto; }
+    .kpi-info-btn svg { color: var(--text-subdued); cursor: pointer; }
+    .kpi-info-btn svg:hover { color: var(--text-secondary); }
+    .kpi-info-btn .info-tooltip { bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 300px; }
+    .kpi-info-btn:hover .info-tooltip { opacity: 1; }
+    .info-tooltip strong { color: var(--text); font-weight: 500; }
+    .info-tooltip p { margin: 0 0 8px 0; }
+    .info-tooltip p:last-child { margin-bottom: 0; }
+    .kpi-card .value-row { display: flex; align-items: center; gap: 8px; }
+    .kpi-card .value { font-family: var(--font-lexend); font-size: 20px; font-weight: 500; line-height: 28px; letter-spacing: 0; color: var(--text); }
+    .kpi-card .sub-value { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .kpi-card .change { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 400; }
+    .kpi-card .change.down { color: var(--text-secondary); }
+    .kpi-card .change.up { color: var(--text-secondary); }
+    .kpi-card .description { font-family: var(--font-inter); font-size: 12px; font-weight: 400; line-height: 16px; color: var(--text-subdued); }
+
+    .chart-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 24px; }
+    .chart-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .chart-card-title { font-family: var(--font-inter); font-size: 13px; font-weight: 500; line-height: 16px; color: var(--text); margin: 0; }
+    .chart-card-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+    .chart-card:hover .chart-card-actions { opacity: 1; pointer-events: auto; }
+    .chart-action-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; }
+    .chart-action-btn:hover { background: var(--bg-fill-secondary-hover); color: var(--text); }
+    .chart-header-info { opacity: 0; pointer-events: none; transition: opacity 0.15s; position: relative; }
+    .chart-card:hover .chart-header-info { opacity: 1; pointer-events: auto; }
+    .info-tooltip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: 280px; background: #1e2129; border: 1px solid #43474f; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: normal; }
+    .info-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #43474f; }
+    .info-tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1e2129; margin-top: -1px; z-index: 1; }
+    .chart-header-info:hover .info-tooltip { opacity: 1; }
+    .action-tooltip-wrap { position: relative; }
+    .action-tooltip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e2129; border: 1px solid #43474f; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: var(--text); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .action-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #43474f; }
+    .action-tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #1e2129; margin-top: -1px; z-index: 1; }
+    .action-tooltip-wrap:hover .action-tooltip { opacity: 1; }
+    .chart-card-body { display: flex; gap: 24px; height: 300px; }
+    .chart-area { flex: 1; min-width: 0; display: flex; gap: 0; }
+    .chart-y-labels { width: 52px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 24px; font-size: 12px; color: var(--text-secondary); text-align: right; }
+    .chart-plot { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+    .chart-tooltip { position: absolute; top: 8px; background: #1e2129; border: 1px solid #43474f; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--text); pointer-events: none; white-space: nowrap; z-index: 10; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+    .chart-tooltip-week { font-size: 11px; color: var(--text-subdued); margin-bottom: 8px; font-weight: 500; letter-spacing: 0.02em; }
+    .chart-tooltip-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; line-height: 16px; }
+    .chart-tooltip-row:last-child { margin-bottom: 0; }
+    .chart-tooltip-swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .chart-tooltip-swatch.line { border-radius: 0; height: 2px; width: 10px; }
+    .chart-tooltip-label { color: var(--text-secondary); flex: 1; min-width: 0; }
+    .chart-tooltip-value { color: var(--text); font-weight: 500; }
+    .chart-plot svg { flex: 1; width: 100%; display: block; }
+    .chart-x-labels { height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+    .capacity-chart-svg { flex: 1; width: 100%; display: block; }
+    .chart-dropdown { height: 28px; padding: 4px 6px; display: flex; align-items: center; gap: 4px; border-radius: 6px; background: var(--bg-fill-secondary); border: none; color: var(--text); font-size: 12px; font-weight: 500; font-family: var(--font-inter); cursor: pointer; }
+    .chart-dropdown-wrap { position: relative; }
+    .chart-dropdown-menu { position: absolute; top: calc(100% + 4px); left: 0; background: #1e2129; border: 1px solid #43474f; border-radius: 8px; padding: 4px; min-width: 110px; z-index: 200; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .chart-dropdown-menu.open { display: block; }
+    .chart-dropdown-option { display: block; width: 100%; padding: 6px 10px; text-align: left; background: none; border: none; border-radius: 4px; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; font-family: var(--font-inter); }
+    .chart-dropdown-option:hover { background: var(--bg-fill-secondary-hover); color: var(--text); }
+    .chart-dropdown-option.selected { color: var(--text); }
+
+    .chart-legend { width: 348px; flex-shrink: 0; display: flex; flex-direction: column; gap: 24px; }
+    .legend-item { display: flex; align-items: center; justify-content: space-between; height: 20px; }
+    .legend-item-left { display: flex; align-items: center; gap: 8px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 10px; flex-shrink: 0; }
+    .legend-dot.line { width: 10px; height: 2px; border-radius: 0; transform: rotate(-6deg); }
+    .legend-dot.gross { background: #24272d !important; }
+    .legend-item-spacer { width: 10px; flex-shrink: 0; display: inline-block; }
+    .legend-label { font-family: var(--font-inter); font-size: 13px; font-weight: 500; line-height: 16px; color: var(--text-secondary); }
+    .legend-value { font-family: var(--font-inter); font-size: 13px; font-weight: 500; line-height: 16px; color: var(--text); }
+    .legend-breakdown { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .legend-breakdown-row { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-family: var(--font-inter); font-size: 12px; font-weight: 400; line-height: 16px; color: var(--text-secondary); }
+    .legend-breakdown-row .fill { flex: 1; min-width: 20px; height: 1px; background: var(--border); }
+
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .donut-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 512px; }
+    .donut-card-header { display: flex; align-items: center; gap: 8px; align-self: stretch; margin-bottom: 12px; }
+    .donut-card .donut-title { font-family: var(--font-inter); font-size: 13px; font-weight: 500; line-height: 16px; color: var(--text); margin: 0; }
+    .donut-card .chart-card-actions { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+    .donut-card:hover .chart-card-actions { opacity: 1; pointer-events: auto; }
+    .donut-card .chart-header-info { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+    .donut-card:hover .chart-header-info { opacity: 1; pointer-events: auto; }
+    .donut-wrapper { position: relative; width: 238px; height: 238px; flex-shrink: 0; }
+    .donut-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: var(--font-lexend); font-size: 20px; font-weight: 500; line-height: 28px; letter-spacing: 0; color: var(--text); text-align: center; }
+    .donut-legend { width: 100%; max-width: 620px; margin-top: 24px; display: flex; flex-direction: column; gap: 0; }
+    .donut-legend-row { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px; min-height: 24px; padding: 4px 0; border-bottom: 1px dotted var(--border); }
+    .donut-legend-row:last-child { border-bottom: none; }
+    .donut-legend-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+    .donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .donut-legend-dot.hatch-dark { background: #616161; }
+    .donut-legend-dot.hatch-light { background: #bdbdbd; }
+    .donut-legend-fill { flex: 1; min-width: 20px; height: 1px; background: transparent; }
+    .donut-legend-value { font-size: 12px; color: var(--text); }
+    .donut-legend-change { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+
+    /* Date range picker */
+    .date-picker-wrap { position: relative; }
+    .btn-dropdown.active { border-color: var(--accent); }
+    .date-picker-popup {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: #161920; border: 1px solid var(--border); border-radius: 16px;
+      padding: 20px 24px; z-index: 500; box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+      display: none; width: 700px;
+    }
+    .date-picker-popup.open { display: flex; flex-direction: column; gap: 20px; }
+    .dp-top { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .dp-top-label { color: var(--text-secondary); font-weight: 500; }
+    .dp-preset {
+      -webkit-appearance: none; appearance: none;
+      height: 28px; padding: 0 28px 0 10px; border-radius: 6px;
+      background: var(--bg-fill-secondary); border: none; color: var(--text);
+      font-size: 13px; font-weight: 500; font-family: var(--font-inter); cursor: pointer;
+    }
+    .dp-cals { display: flex; gap: 32px; }
+    .dp-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .dp-cal-nav {
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; border: none; background: transparent; color: var(--text-secondary);
+      cursor: pointer; font-size: 18px; padding: 0; line-height: 1;
+    }
+    .dp-cal-nav:hover { background: var(--bg-fill-secondary-hover); color: var(--text); }
+    .dp-cal-title { font-size: 13px; font-weight: 500; color: var(--text); display: flex; gap: 8px; }
+    .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .dp-dow { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .dp-cell { position: relative; height: 36px; display: flex; align-items: center; justify-content: center; }
+    .dp-cell.in-range::before { content: ''; position: absolute; top: 2px; bottom: 2px; left: 0; right: 0; background: #20242e; z-index: 0; }
+    .dp-cell.in-range.row-start::before { border-radius: 8px 0 0 8px; left: 3px; }
+    .dp-cell.in-range.row-end::before { border-radius: 0 8px 8px 0; right: 3px; }
+    .dp-cell.in-range.row-only::before { border-radius: 8px; left: 3px; right: 3px; }
+    .dp-num {
+      position: relative; z-index: 1; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: var(--text); border-radius: 8px; cursor: pointer; user-select: none;
+    }
+    .dp-cell:not(.empty) .dp-num:hover { background: rgba(255,255,255,0.07); }
+    .dp-cell.range-start .dp-num, .dp-cell.range-end .dp-num { background: #dce1ed; color: #0d1018; font-weight: 600; }
+    .dp-cell.today .dp-num::after {
+      content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: var(--accent);
+    }
+    .dp-cell.empty { pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-segment">
+        <div class="sidebar-icon-wrap active">
+          <!-- Dashboard: gauge/speedometer -->
+          <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22a9 9 0 100-18 9 9 0 000 18z"/><path d="M7.5 16.5A6 6 0 0116.5 16.5" stroke-linecap="round"/><path d="M12 13.5L9 9" stroke-linecap="round"/><circle cx="12" cy="13.5" r="1.25" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <span class="sidebar-label">Dashboard</span>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-segment">
+        <!-- Schedule: horizontal time-slot bars -->
+        <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M3 10h11M3 14h14M3 18h9" stroke-linecap="round"/></svg></div>
+        <span class="sidebar-label">Schedule</span>
+      </div>
+      <div class="sidebar-segment">
+        <!-- Project plan: document with rows -->
+        <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h6M8 12h8M8 16h4" stroke-linecap="round"/></svg></div>
+        <span class="sidebar-label">Project plan</span>
+      </div>
+      <div class="sidebar-segment">
+        <!-- People: two person silhouettes -->
+        <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 8c1.66 0 3 1.34 3 3s-1.34 3-3 3M20 20v-2c0-1.1-.9-2-2-2"/></svg></div>
+        <span class="sidebar-label">People</span>
+      </div>
+      <div class="sidebar-segment">
+        <!-- Projects: folder -->
+        <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg></div>
+        <span class="sidebar-label">Projects</span>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-segment">
+        <!-- Report: ascending bar chart -->
+        <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20v-5M9 20V9M14 20v-7M19 20V4" stroke-linecap="round"/></svg></div>
+        <span class="sidebar-label">Report</span>
+      </div>
+      <div class="sidebar-segment">
+        <!-- Log time: stopwatch -->
+        <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="13" r="8"/><path d="M10 3h4M12 3v3" stroke-linecap="round"/><path d="M12 10v3l2.5 2.5" stroke-linecap="round"/></svg></div>
+        <span class="sidebar-label">Log time</span>
+      </div>
+      <div class="sidebar-spacer"></div>
+      <!-- Settings -->
+      <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div>
+      <!-- Help -->
+      <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke-linecap="round"/></svg></div>
+      <!-- Notifications -->
+      <div class="sidebar-icon-wrap"><svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+      <div class="sidebar-avatar" title="User"></div>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <div class="header-left">
+          <h1 class="header-title">Dashboard</h1>
+          <div class="tabs">
+            <button type="button" class="tab">Project finance</button>
+            <button type="button" class="tab active">People operations</button>
+          </div>
+        </div>
+        <div class="header-right">
+          <button type="button" class="btn-icon" aria-label="Previous"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16l-6-6 6-6"/></svg></button>
+          <button type="button" class="btn-icon" aria-label="Next"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4l6 6-6 6"/></svg></button>
+          <div class="date-picker-wrap">
+            <button type="button" class="btn-dropdown" id="dp-trigger"><span>Quarter: </span><span class="accent" id="dp-range-text">01 Jan 2026 – 31 Mar 2026</span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+            <div class="date-picker-popup" id="dp-popup">
+              <div class="dp-top">
+                <span class="dp-top-label">Date range:</span>
+                <select class="dp-preset" id="dp-preset">
+                  <option value="this-quarter">This quarter</option>
+                  <option value="last-quarter">Last quarter</option>
+                  <option value="this-month">This month</option>
+                  <option value="last-month">Last month</option>
+                  <option value="this-year">This year</option>
+                </select>
+              </div>
+              <div class="dp-cals">
+                <div id="dp-left"></div>
+                <div id="dp-right"></div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-dropdown">Scheduled<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="controls">
+          <div class="controls-left">
+            <div class="stage-filter-wrap">
+              <button type="button" class="btn-filter" id="stage-filter-btn" onclick="toggleStageDropdown(event)">Project stage <span class="accent" id="stage-filter-label" style="color:var(--accent)"></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+              <div class="stage-dropdown" id="stage-dropdown"></div>
+            </div>
+            <div class="stage-filter-wrap">
+              <button type="button" class="btn-filter" id="ptype-filter-btn" onclick="toggleHeroDropdown('ptype-dropdown',event)">Person type <span class="accent" id="ptype-filter-label" style="color:var(--accent)"></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+              <div class="stage-dropdown" id="ptype-dropdown"></div>
+            </div>
+            <div class="stage-filter-wrap">
+              <button type="button" class="btn-filter" id="toff-filter-btn" onclick="toggleHeroDropdown('toff-dropdown',event)">Time off <span class="accent" id="toff-filter-label" style="color:var(--accent)"></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+              <div class="stage-dropdown" id="toff-dropdown"></div>
+            </div>
+            <div class="filter-wrap">
+            <button type="button" class="btn-filter" id="filter-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h18M3 12h12M3 20h6"/><circle cx="17" cy="4" r="2"/><circle cx="13" cy="12" r="2"/><circle cx="9" cy="20" r="2"/></svg> Filter</button>
+            <div class="filter-dropdown" id="filter-dropdown">
+              <div class="filter-search-wrap">
+                <span class="filter-search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
+                <input class="filter-search-input" type="text" placeholder="Search Filters" id="filter-search" />
+              </div>
+              <div class="filter-section" id="filter-items">
+                <div class="filter-item" data-filter="department"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Department</div>
+                <div class="filter-item" data-filter="role"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><circle cx="12" cy="14" r="2"/></svg></span>Role</div>
+                <div class="filter-item" data-filter="person-tag"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="8" r="3"/><path d="M4 20c0-3.3 2.7-6 6-6"/><path d="M15 14l1.5-1.5a2 2 0 012.83 0l2 2a2 2 0 010 2.83l-4.5 4.5a2 2 0 01-2.83 0L12 19.83"/></svg></span>Person tag</div>
+                <div class="filter-item" data-filter="manager"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="4" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 6v4M12 10l-5 7M12 10l5 7"/></svg></span>Manager</div>
+                <div class="filter-sep"></div>
+                <div class="filter-item" data-filter="client"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg></span>Client</div>
+                <div class="filter-item" data-filter="project-tag"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/><path d="M9 14l1.5-1.5a1.5 1.5 0 012.12 0L14 14"/></svg></span>Project tag</div>
+                <div class="filter-item" data-filter="project-owner"><span class="filter-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/><circle cx="12" cy="14" r="2"/></svg></span>Project owner</div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="label-row"><span class="label">Delivery capacity</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Lower than expected may signal high time off, holidays, or reduced headcount.</p><p><strong>Delivery capacity</strong> = gross capacity − time off − public holidays.</p></div></div></div>
+            <div class="value-row"><span class="value">83%</span><span class="sub-value">28,981h</span><span class="change down"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M0 0l5 6 5-6H0z"/></svg>10%</span></div>
+            <span class="description">Net of 65 days time off</span>
+          </div>
+          <div class="kpi-card">
+            <div class="label-row"><span class="label">Time offs</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Higher than planned may signal upcoming capacity pressure or risk of burnout.</p><p><strong>Time offs</strong> = sum of all approved leave days for the period.</p></div></div></div>
+            <div class="value-row"><span class="value">65 days</span><span class="change down"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M0 0l5 6 5-6H0z"/></svg>10%</span></div>
+            <span class="description">46 additional days requested</span>
+          </div>
+          <div class="kpi-card">
+            <div class="label-row"><span class="label">Utilization</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Low utilization may indicate scheduling gaps or underuse of your team's capacity.</p><p><strong>Utilization</strong> = scheduled hours ÷ delivery capacity.</p></div></div></div>
+            <div class="value-row"><span class="value">75%</span><span class="change down"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M0 0l5 6 5-6H0z"/></svg>1%</span></div>
+            <span class="description">22,341h of delivery capacity used</span>
+          </div>
+          <div class="kpi-card">
+            <div class="label-row"><span class="label">Billable utilization</span><div class="kpi-info-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip"><p>Lower than target may indicate over-servicing, internal work, or unplanned non-billable time.</p><p><strong>Billable utilization</strong> = billable scheduled hours ÷ delivery capacity.</p></div></div></div>
+            <div class="value-row"><span class="value">55%</span><span class="change down"><svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor"><path d="M0 0l5 6 5-6H0z"/></svg>1%</span></div>
+            <span class="description">12,834h billable of delivery capacity used</span>
+          </div>
+        </div>
+
+        <!-- Capacity chart -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h2 class="chart-card-title">Capacity</h2>
+            <div class="chart-dropdown-wrap">
+              <button type="button" class="chart-dropdown" id="cap-mode-btn" onclick="toggleDropdown('cap-menu',event)"><span id="cap-mode-label">Weeks</span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+              <div class="chart-dropdown-menu" id="cap-menu">
+                <button class="chart-dropdown-option selected" onclick="setChartMode('capacity','weeks',this)">Weeks</button>
+                <button class="chart-dropdown-option" onclick="setChartMode('capacity','days',this)">Days</button>
+              </div>
+            </div>
+            <div class="chart-action-btn chart-header-info" role="button" tabindex="0" title="About this chart"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip">This is your supply vs. demand. Scheduled hours is all booked work compared against your delivery capacity — based on employees and contractors, adjusted for time off and holidays.</div></div>
+            <div class="chart-card-actions">
+              <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/></svg></button><span class="action-tooltip">Copy as image</span></div>
+              <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h2.5V8H2zM6.75 12h2.5V5h-2.5zM11.5 12H14V2h-2.5z"/></svg></button><span class="action-tooltip">View full report</span></div>
+            </div>
+          </div>
+          <div class="chart-card-body">
+            <div class="chart-area">
+              <div class="chart-y-labels" id="cap-y-labels"><span>20,000h</span><span>15,000h</span><span>10,000h</span><span>5,000h</span><span>0h</span></div>
+              <div class="chart-plot" id="capacity-plot">
+              <svg class="capacity-chart-svg" id="capacity-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <pattern id="capacityHatch" patternUnits="userSpaceOnUse" width="1.5" height="1.5">
+                    <line x1="0" y1="1.5" x2="1.5" y2="0" stroke="#4a5060" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <!-- Dark chart background -->
+                <rect width="100" height="100" fill="#13151a"/>
+                <!-- Grid lines at 20k/15k/10k/5k/0 -->
+                <line x1="0" y1="0" x2="100" y2="0" stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="25" x2="100" y2="25" stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="50" x2="100" y2="50" stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="75" x2="100" y2="75" stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="100" x2="100" y2="100" stroke="#2d3138" stroke-width="0.5"/>
+                <!-- Gross capacity: 20k/19.2k/17.8k/18.6k/19k → y=0/4/11/7/5 -->
+                <path id="cap-gross-fill" d="M 0 0 L 25 4 L 50 11 L 75 7 L 100 5 L 100 100 L 0 100 Z" fill="#2a2e3a" opacity="0.6"/>
+                <path id="cap-gross-hatch" d="M 0 0 L 25 4 L 50 11 L 75 7 L 100 5 L 100 100 L 0 100 Z" fill="url(#capacityHatch)" opacity="0.3"/>
+                <path id="cap-delivery-line" d="M 0 25 L 25 26 L 50 24 L 75 24.5 L 100 25" fill="none" stroke="#6ad2ff" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="cap-scheduled-line" d="M 0 62.5 L 25 62.5 L 50 62.5 L 75 63 L 100 62.5" fill="none" stroke="#e24856" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Hover line -->
+                <line id="capacity-hover-line" x1="0" y1="0" x2="0" y2="100" stroke="#ffffff" stroke-width="0.5" opacity="0.3" style="display:none"/>
+              </svg>
+              <div id="capacity-tooltip" class="chart-tooltip"></div>
+              <div id="cap-x-labels" class="chart-x-labels"><span>1 Dec</span><span>8 Dec</span><span>15 Dec</span><span>22 Dec</span><span>29 Dec</span></div>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-item-left"><svg width="10" height="10" viewBox="0 0 10 10" style="flex-shrink:0"><rect width="10" height="10" fill="#24272d"/><line x1="-2" y1="8" x2="8" y2="-2" stroke="#4a4f58" stroke-width="2"/><line x1="2" y1="12" x2="12" y2="2" stroke="#4a4f58" stroke-width="2"/></svg><span class="legend-label">Gross capacity</span></div><span class="legend-value">20,000h</span></div>
+              <div class="legend-item"><div class="legend-item-left"><span class="legend-dot line" style="background:#6ad2ff;height:2px"></span><span class="legend-label">Delivery capacity</span></div><span class="legend-value">15,000h</span></div>
+              <div>
+                <div class="legend-item"><div class="legend-item-left"><span class="legend-dot line" style="background:#e24856;height:2px"></span><span class="legend-label">Scheduled</span></div><span class="legend-value">7,500h</span></div>
+                <div class="legend-breakdown">
+                  <div class="legend-breakdown-row">On track <span class="fill"></span> 2,000h</div>
+                  <div class="legend-breakdown-row">Off track <span class="fill"></span> 2,000h</div>
+                  <div class="legend-breakdown-row">Completed <span class="fill"></span> 3,500h</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- People types & Time offs -->
+        <div class="charts-row">
+          <div class="donut-card">
+            <div class="donut-card-header">
+              <h2 class="donut-title">People types</h2>
+              <div class="chart-action-btn chart-header-info" role="button" tabindex="0"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip">The breakdown of scheduled hours across your people types. Use this to understand how work is spread and whether you're relying too heavily on contractors versus your core team. Placeholders and unassigned roles hours are planned but not yet assigned to a real person.</div></div>
+              <div class="chart-card-actions">
+                <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/></svg></button><span class="action-tooltip">Copy as image</span></div>
+                <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h2.5V8H2zM6.75 12h2.5V5h-2.5zM11.5 12H14V2h-2.5z"/></svg></button><span class="action-tooltip">View full report</span></div>
+              </div>
+            </div>
+            <div class="donut-wrapper">
+              <svg id="donut-people-svg" width="238" height="238" viewBox="0 0 238 238">
+                <defs>
+                  <pattern id="donutHatchDark" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(-45)">
+                    <line x1="0" y1="0" x2="0" y2="6" stroke="#3d3d3d" stroke-width="1"/>
+                  </pattern>
+                  <pattern id="donutHatchLight" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(-45)">
+                    <line x1="0" y1="0" x2="0" y2="6" stroke="#8a8a8a" stroke-width="1"/>
+                  </pattern>
+                </defs>
+                <!-- Unassigned 20% – uniform 2px gap at inner & outer -->
+                <path d="M 121.99 0.2 A 119 119 0 0 1 231.48 79.32 L 201.07 88.1 A 87 87 0 0 0 121 31.98 Z" fill="#b39ddb" class="donut-segment" data-label="Unassigned roles" data-count="2" data-b1-label="Billable" data-b1-val="1,600h" data-b2-label="Non-billable" data-b2-val="400h" data-color="#b39ddb"/>
+                <!-- Contractors 15% -->
+                <path d="M 232.77 84.14 A 119 119 0 0 1 216.52 187.22 L 190.53 168.43 A 87 87 0 0 0 202.26 93.64 Z" fill="#7e57c2" class="donut-segment" data-label="Contractors" data-count="24" data-b1-label="Billable" data-b1-val="1,200h" data-b2-label="Non-billable" data-b2-val="300h" data-color="#7e57c2"/>
+                <!-- Placeholders 5% light grey hatched -->
+                <path d="M 214.12 190.54 A 119 119 0 0 1 190.68 213.88 L 171.77 188.17 A 87 87 0 0 0 188.21 171.65 Z" fill="#bdbdbd" class="donut-segment" data-label="Placeholders" data-count="6" data-b1-label="Billable" data-b1-val="400h" data-b2-label="Non-billable" data-b2-val="100h" data-color="#bdbdbd"/>
+                <path d="M 214.12 190.54 A 119 119 0 0 1 190.68 213.88 L 171.77 188.17 A 87 87 0 0 0 188.21 171.65 Z" fill="url(#donutHatchLight)"/>
+                <!-- Employees 60% dark grey hatched -->
+                <path d="M 187.38 215.98 A 119 119 0 1 1 116.92 0.21 L 116.91 32.48 A 87 87 0 1 0 168.65 188.98 Z" fill="#616161" class="donut-segment" data-label="Employees" data-count="48" data-b1-label="Billable" data-b1-val="15,000h" data-b2-label="Non-billable" data-b2-val="10,000h" data-color="#616161"/>
+                <path d="M 187.38 215.98 A 119 119 0 1 1 116.92 0.21 L 116.91 32.48 A 87 87 0 1 0 168.65 188.98 Z" fill="url(#donutHatchDark)"/>
+              </svg>
+              <div class="donut-center">10,000h</div>
+            </div>
+            <div class="donut-legend">
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot hatch-dark"></span>Employees (48)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">6,000h</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#7e57c2"></span>Contractors (24)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">1,500h</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot hatch-light"></span>Placeholders (6)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">500h</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#b39ddb"></span>Unassigned roles (2)</div><span class="donut-legend-fill"></span><span class="donut-legend-value">2,000h</span><span class="donut-legend-change">▲ 3%</span></div>
+            </div>
+          </div>
+          <div class="donut-card">
+            <div class="donut-card-header">
+              <h2 class="donut-title">Time offs</h2>
+              <div class="chart-action-btn chart-header-info" role="button" tabindex="0"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip">The breakdown of time off by type for the period. Every day here impacts your delivery capacity, use this to spot where absences are concentrated and whether projects with high time off overlap need additional cover.</div></div>
+              <div class="chart-card-actions">
+                <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/></svg></button><span class="action-tooltip">Copy as image</span></div>
+                <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h2.5V8H2zM6.75 12h2.5V5h-2.5zM11.5 12H14V2h-2.5z"/></svg></button><span class="action-tooltip">View full report</span></div>
+              </div>
+            </div>
+            <div class="donut-wrapper">
+              <svg id="donut-timeoff-svg" width="238" height="238" viewBox="0 0 238 238">
+                <!-- Paid time off: 20d → 191.7px, Parental leave: 12d → 115.0px, Public holiday: 15d → 143.8px -->
+                <!-- Sick leave: 8d → 76.7px, Annual leave: 6d → 57.5px, +2 types: 4d → 38.3px. Total: 65d, gap: 4px -->
+                <circle cx="119" cy="119" r="103" fill="none" class="donut-segment" data-label="Paid time off" data-b1-label="People" data-b1-val="18" data-b2-label="Avg duration" data-b2-val="1.1 days" data-color="#6ad2ff" stroke="#6ad2ff" stroke-width="32" stroke-dasharray="191.7 455.4" stroke-dashoffset="0"    stroke-linecap="butt" transform="rotate(-90 119 119)"/>
+                <circle cx="119" cy="119" r="103" fill="none" class="donut-segment" data-label="Parental leave" data-b1-label="People" data-b1-val="3" data-b2-label="Avg duration" data-b2-val="4.0 days" data-color="#254cba" stroke="#254cba" stroke-width="32" stroke-dasharray="115.0 532.1" stroke-dashoffset="-195.7" stroke-linecap="butt" transform="rotate(-90 119 119)"/>
+                <circle cx="119" cy="119" r="103" fill="none" class="donut-segment" data-label="Public holiday" data-b1-label="Days" data-b1-val="15 days" data-b2-label="Impact" data-b2-val="All staff" data-color="#2e5fe8" stroke="#2e5fe8" stroke-width="32" stroke-dasharray="143.8 503.3" stroke-dashoffset="-314.7" stroke-linecap="butt" transform="rotate(-90 119 119)"/>
+                <circle cx="119" cy="119" r="103" fill="none" class="donut-segment" data-label="Sick leave" data-b1-label="People" data-b1-val="7" data-b2-label="Avg duration" data-b2-val="1.1 days" data-color="#0954a5" stroke="#0954a5" stroke-width="32" stroke-dasharray="76.7 570.4"  stroke-dashoffset="-462.5" stroke-linecap="butt" transform="rotate(-90 119 119)"/>
+                <circle cx="119" cy="119" r="103" fill="none" class="donut-segment" data-label="Annual leave" data-value="6 days" data-pct=" 9.2%" data-change="▲ 3%" data-color="#6ad2ff" stroke="#6ad2ff" stroke-width="32" stroke-dasharray="57.5 589.6"  stroke-dashoffset="-543.2" stroke-linecap="butt" transform="rotate(-90 119 119)"/>
+                <circle cx="119" cy="119" r="103" fill="none" class="donut-segment" data-label="+2 time off types" data-value="4 days" data-pct=" 6.2%" data-change="▲ 3%" data-color="#cee7fe" stroke="#cee7fe" stroke-width="32" stroke-dasharray="38.3 608.8"  stroke-dashoffset="-604.7" stroke-linecap="butt" transform="rotate(-90 119 119)"/>
+              </svg>
+              <div class="donut-center">65 days</div>
+            </div>
+            <div class="donut-legend">
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#6ad2ff"></span>Paid time off</div><span class="donut-legend-fill"></span><span class="donut-legend-value">20 days</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#254cba"></span>Parental leave</div><span class="donut-legend-fill"></span><span class="donut-legend-value">12 days</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#2e5fe8"></span>Public holiday</div><span class="donut-legend-fill"></span><span class="donut-legend-value">15 days</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#0954a5"></span>Sick leave</div><span class="donut-legend-fill"></span><span class="donut-legend-value">8 days</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#6ad2ff"></span>Annual leave</div><span class="donut-legend-fill"></span><span class="donut-legend-value">6 days</span><span class="donut-legend-change">▲ 3%</span></div>
+              <div class="donut-legend-row"><div class="donut-legend-label"><span class="donut-legend-dot" style="background:#cee7fe"></span>+2 time off types</div><span class="donut-legend-fill"></span><span class="donut-legend-value">4 days</span><span class="donut-legend-change">▲ 3%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Utilization chart -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h2 class="chart-card-title">Utilization</h2>
+            <div class="chart-dropdown-wrap">
+              <button type="button" class="chart-dropdown" id="util-mode-btn" onclick="toggleDropdown('util-menu',event)"><span id="util-mode-label">Weeks</span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8l4 4 4-4"/></svg></button>
+              <div class="chart-dropdown-menu" id="util-menu">
+                <button class="chart-dropdown-option selected" onclick="setChartMode('util','weeks',this)">Weeks</button>
+                <button class="chart-dropdown-option" onclick="setChartMode('util','days',this)">Days</button>
+              </div>
+            </div>
+            <div class="chart-action-btn chart-header-info" role="button" tabindex="0" title="About this chart"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5.5v.5"/></svg><div class="info-tooltip">How effectively your employees and contractors are being used against their delivery capacity. The gap between billable and total utilization shows how much of your team's time is going to non-billable work. Use this to track whether you're on target and spot dips before they become a problem.</div></div>
+            <div class="chart-card-actions">
+              <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 009.5 2h-6A1.5 1.5 0 002 3.5v6A1.5 1.5 0 003.5 11H5"/></svg></button><span class="action-tooltip">Copy as image</span></div>
+              <div class="action-tooltip-wrap"><button type="button" class="chart-action-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12h2.5V8H2zM6.75 12h2.5V5h-2.5zM11.5 12H14V2h-2.5z"/></svg></button><span class="action-tooltip">View full report</span></div>
+            </div>
+          </div>
+          <div class="chart-card-body">
+            <div class="chart-area">
+              <div class="chart-y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+              <div class="chart-plot" id="util-plot">
+              <svg class="capacity-chart-svg" id="util-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <pattern id="utilHatch" patternUnits="userSpaceOnUse" width="1.5" height="1.5">
+                    <line x1="0" y1="1.5" x2="1.5" y2="0" stroke="#4a5060" stroke-width="0.4"/>
+                  </pattern>
+                </defs>
+                <!-- Dark background -->
+                <rect width="100" height="100" fill="#13151a"/>
+                <!-- Grid lines -->
+                <line x1="0" y1="0"   x2="100" y2="0"   stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="25"  x2="100" y2="25"  stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="50"  x2="100" y2="50"  stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="75"  x2="100" y2="75"  stroke="#2d3138" stroke-width="0.5"/>
+                <line x1="0" y1="100" x2="100" y2="100" stroke="#2d3138" stroke-width="0.5"/>
+                <!-- Hatched fill: non-billable band between billable (red) and utilization (cyan) curves -->
+                <!-- Utilization: 53%/65%/75%/65%/62% → y=47/35/25/35/38 -->
+                <!-- Billable:    47%/49%/58%/42%/38% → y=53/51/42/58/62 -->
+                <path id="util-fill1" d="M 0 47 C 8 44, 17 32, 25 35 C 33 38, 42 22, 50 25 C 58 28, 67 38, 75 35 C 83 33, 92 38, 100 38 L 100 62 C 92 62, 83 59, 75 58 C 67 57, 58 43, 50 42 C 42 41, 33 51, 25 51 C 17 51, 8 53, 0 53 Z" fill="#2a2e3a" opacity="0.7"/>
+                <path id="util-fill2" d="M 0 47 C 8 44, 17 32, 25 35 C 33 38, 42 22, 50 25 C 58 28, 67 38, 75 35 C 83 33, 92 38, 100 38 L 100 62 C 92 62, 83 59, 75 58 C 67 57, 58 43, 50 42 C 42 41, 33 51, 25 51 C 17 51, 8 53, 0 53 Z" fill="url(#utilHatch)" opacity="0.5"/>
+                <line id="util-delivery-line" x1="0" y1="1" x2="100" y2="1" stroke="#7b7f88" stroke-width="0.6" stroke-dasharray="1.5 1"/>
+                <path id="util-util-line" d="M 0 47 C 8 44, 17 32, 25 35 C 33 38, 42 22, 50 25 C 58 28, 67 38, 75 35 C 83 33, 92 38, 100 38" fill="none" stroke="#6ad2ff" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="util-bill-line" d="M 0 53 C 8 53, 17 51, 25 51 C 33 51, 42 41, 50 42 C 58 43, 67 57, 75 58 C 83 59, 92 62, 100 62" fill="none" stroke="#e24856" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Hover line -->
+                <line id="util-hover-line" x1="0" y1="0" x2="0" y2="100" stroke="#ffffff" stroke-width="0.5" opacity="0.3" style="display:none"/>
+              </svg>
+              <div id="util-tooltip" class="chart-tooltip"></div>
+              <div id="util-x-labels" class="chart-x-labels"><span>1 Dec</span><span>8 Dec</span><span>15 Dec</span><span>22 Dec</span><span>29 Dec</span></div>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-item-left"><span class="legend-dot line" style="background:#7b7f88;height:1px;border-top:1px dashed #7b7f88;background:none"></span><span class="legend-label">Delivery capacity</span></div><span class="legend-value">10,000h</span></div>
+              <div class="legend-item"><div class="legend-item-left"><span class="legend-dot line" style="background:#6ad2ff;height:2px"></span><span class="legend-label">Utilization</span></div><span class="legend-value">75% (7,500h)</span></div>
+              <div>
+                <div class="legend-item"><div class="legend-item-left"><span class="legend-dot line" style="background:#e24856;height:2px"></span><span class="legend-label">Billable utilization</span></div><span class="legend-value">58% (5,800h)</span></div>
+                <div class="legend-breakdown">
+                  <div class="legend-breakdown-row">On track <span class="fill"></span> 2,000h</div>
+                  <div class="legend-breakdown-row">Off track <span class="fill"></span> 2,000h</div>
+                  <div class="legend-breakdown-row">Completed <span class="fill"></span> 1,800h</div>
+                </div>
+              </div>
+              <div>
+                <div class="legend-item"><div class="legend-item-left"><svg width="10" height="10" viewBox="0 0 10 10" style="flex-shrink:0"><rect width="10" height="10" fill="#24272d"/><line x1="-2" y1="8" x2="8" y2="-2" stroke="#4a4f58" stroke-width="2"/><line x1="2" y1="12" x2="12" y2="2" stroke="#4a4f58" stroke-width="2"/></svg><span class="legend-label">Non-billable utilization</span></div><span class="legend-value">17% (1,700h)</span></div>
+                <div class="legend-breakdown">
+                  <div class="legend-breakdown-row">On track <span class="fill"></span> 500h</div>
+                  <div class="legend-breakdown-row">Off track <span class="fill"></span> 700h</div>
+                  <div class="legend-breakdown-row">Completed <span class="fill"></span> 500h</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+<script>
+  // ── Data ──────────────────────────────────────────────────────────────────
+
+  // Working days Dec 2024 (Mon–Fri): 2–6, 9–13, 16–20, 23–27, 30–31
+  const decDays = [2,3,4,5,6, 9,10,11,12,13, 16,17,18,19,20, 23,24,25,26,27, 30,31];
+
+  const capWeeksData = [
+    { label:'1 Dec',  period:'Week of',  gross:'20,000h', delivery:'15,000h', scheduled:'7,500h' },
+    { label:'8 Dec',  period:'Week of',  gross:'19,200h', delivery:'14,800h', scheduled:'7,500h' },
+    { label:'15 Dec', period:'Week of',  gross:'17,800h', delivery:'15,200h', scheduled:'7,500h' },
+    { label:'22 Dec', period:'Week of',  gross:'18,600h', delivery:'15,100h', scheduled:'7,400h' },
+    { label:'29 Dec', period:'Week of',  gross:'19,000h', delivery:'15,000h', scheduled:'7,500h' },
+  ];
+
+  // Daily capacity values (max 4,000h/day; Christmas week drops)
+  const capGrossD  = [3950,4000,3900,3850,3980, 3900,4050,3950,3900,3800, 3850,3900,3950,4000,3900, 2800,2650,2400,2600,2750, 3500,3600];
+  const capDelivD  = [2980,3020,2940,2890,3010, 2950,3080,2960,2930,2840, 2880,2940,2970,3010,2910, 2100,1980,1800,1950,2060, 2640,2700];
+  const capSchedD  = [1480,1510,1470,1440,1500, 1470,1540,1480,1460,1420, 1440,1460,1480,1500,1450, 1040, 980, 880, 960,1020, 1300,1350];
+  const capDaysData = decDays.map((d,i) => ({
+    label: d+' Dec', period: '', gross: capGrossD[i].toLocaleString()+'h',
+    delivery: capDelivD[i].toLocaleString()+'h', scheduled: capSchedD[i].toLocaleString()+'h'
+  }));
+
+  const utilWeeksData = [
+    { label:'1 Dec',  period:'Week of',  delivery:'10,000h', utilization:'53%', billable:'47%', nonBillable:'6%'  },
+    { label:'8 Dec',  period:'Week of',  delivery:'10,000h', utilization:'65%', billable:'49%', nonBillable:'16%' },
+    { label:'15 Dec', period:'Week of',  delivery:'10,000h', utilization:'75%', billable:'58%', nonBillable:'17%' },
+    { label:'22 Dec', period:'Week of',  delivery:'10,000h', utilization:'65%', billable:'42%', nonBillable:'23%' },
+    { label:'29 Dec', period:'Week of',  delivery:'10,000h', utilization:'62%', billable:'38%', nonBillable:'24%' },
+  ];
+
+  const utilPctD   = [52,55,60,58,62, 64,68,70,72,74, 75,74,72,70,68, 60,54,48,52,55, 58,60];
+  const billPctD   = [46,48,52,50,54, 56,60,62,58,56, 58,57,55,53,51, 42,36,30,34,38, 40,42];
+  const utilDaysData = decDays.map((d,i) => ({
+    label: d+' Dec', period: '', delivery:'10,000h',
+    utilization: utilPctD[i]+'%', billable: billPctD[i]+'%',
+    nonBillable: (utilPctD[i]-billPctD[i])+'%'
+  }));
+
+  // ── Path helpers ──────────────────────────────────────────────────────────
+
+  function pts(vals, scale) {
+    // vals: array of numbers, scale: max value → y=0
+    const n = vals.length;
+    return vals.map((v, i) => ({ x: i/(n-1)*100, y: 100 - (v/scale)*100 }));
+  }
+
+  function linePath(points) {
+    return points.map((p,i) => `${i===0?'M':'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+  }
+
+  function fillPath(topPoints) {
+    const n = topPoints.length;
+    const top = linePath(topPoints);
+    return `${top} L ${topPoints[n-1].x.toFixed(2)} 100 L ${topPoints[0].x.toFixed(2)} 100 Z`;
+  }
+
+  function bandPath(topPoints, bottomPoints) {
+    const top = linePath(topPoints);
+    const bot = [...bottomPoints].reverse().map((p,i) => `${i===0?'L':'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+    return `${top} ${bot} Z`;
+  }
+
+  // ── Chart state ───────────────────────────────────────────────────────────
+
+  let capMode = 'weeks';
+  let utilMode = 'weeks';
+  let capHoverData = capWeeksData;
+  let utilHoverData = utilWeeksData;
+  let capXSnap = [0,25,50,75,100];
+  let utilXSnap = [0,25,50,75,100];
+
+  // ── Update capacity chart ─────────────────────────────────────────────────
+
+  function updateCapacityChart(mode) {
+    const isWeeks = mode === 'weeks';
+    const scale = isWeeks ? 20000 : 4000;
+    const grossV   = isWeeks ? [20000,19200,17800,18600,19000] : capGrossD;
+    const delivV   = isWeeks ? [15000,14800,15200,15100,15000] : capDelivD;
+    const schedV   = isWeeks ? [7500,7500,7500,7400,7500]     : capSchedD;
+    const xLabels  = isWeeks ? ['1 Dec','8 Dec','15 Dec','22 Dec','29 Dec']
+                             : ['2 Dec','9 Dec','16 Dec','23 Dec','30 Dec'];
+    const yLabels  = isWeeks ? ['20,000h','15,000h','10,000h','5,000h','0h']
+                             : ['4,000h','3,000h','2,000h','1,000h','0h'];
+
+    const gPts = pts(grossV, scale);
+    const dPts = pts(delivV, scale);
+    const sPts = pts(schedV, scale);
+
+    document.getElementById('cap-gross-fill').setAttribute('d', fillPath(gPts));
+    document.getElementById('cap-gross-hatch').setAttribute('d', fillPath(gPts));
+    document.getElementById('cap-delivery-line').setAttribute('d', linePath(dPts));
+    document.getElementById('cap-scheduled-line').setAttribute('d', linePath(sPts));
+
+    const xEl = document.getElementById('cap-x-labels');
+    xEl.innerHTML = xLabels.map(l => `<span>${l}</span>`).join('');
+    const yEl = document.getElementById('cap-y-labels');
+    yEl.innerHTML = yLabels.map(l => `<span>${l}</span>`).join('');
+
+    capHoverData = isWeeks ? capWeeksData : capDaysData;
+    capXSnap = gPts.map(p => p.x);
+  }
+
+  // ── Update utilization chart ──────────────────────────────────────────────
+
+  function updateUtilChart(mode) {
+    const isWeeks = mode === 'weeks';
+    const uV   = isWeeks ? [53,65,75,65,62]      : utilPctD;
+    const bV   = isWeeks ? [47,49,58,42,38]      : billPctD;
+    const xLabels = isWeeks ? ['1 Dec','8 Dec','15 Dec','22 Dec','29 Dec']
+                            : ['2 Dec','9 Dec','16 Dec','23 Dec','30 Dec'];
+
+    const uPts = pts(uV, 100);
+    const bPts = pts(bV, 100);
+    const band = bandPath(uPts, bPts);
+
+    document.getElementById('util-fill1').setAttribute('d', band);
+    document.getElementById('util-fill2').setAttribute('d', band);
+    document.getElementById('util-util-line').setAttribute('d', linePath(uPts));
+    document.getElementById('util-bill-line').setAttribute('d', linePath(bPts));
+
+    const xEl = document.getElementById('util-x-labels');
+    xEl.innerHTML = xLabels.map(l => `<span>${l}</span>`).join('');
+
+    utilHoverData = isWeeks ? utilWeeksData : utilDaysData;
+    utilXSnap = uPts.map(p => p.x);
+  }
+
+  // ── Dropdown ──────────────────────────────────────────────────────────────
+
+  function toggleDropdown(menuId, e) {
+    e.stopPropagation();
+    const menu = document.getElementById(menuId);
+    menu.classList.toggle('open');
+  }
+
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.chart-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+  });
+
+  function setChartMode(chart, mode, btn) {
+    // Update selected state
+    btn.closest('.chart-dropdown-menu').querySelectorAll('.chart-dropdown-option').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    btn.closest('.chart-dropdown-menu').classList.remove('open');
+
+    if (chart === 'capacity') {
+      capMode = mode;
+      document.getElementById('cap-mode-label').textContent = mode === 'weeks' ? 'Weeks' : 'Days';
+      updateCapacityChart(mode);
+    } else {
+      utilMode = mode;
+      document.getElementById('util-mode-label').textContent = mode === 'weeks' ? 'Weeks' : 'Days';
+      updateUtilChart(mode);
+    }
+  }
+
+  // ── Hover ─────────────────────────────────────────────────────────────────
+
+  function setupChartHover(svgId, hoverLineId, tooltipId, getSnapFn, getDataFn, buildHTML, periodLabel) {
+    const svg = document.getElementById(svgId);
+    const hoverLine = document.getElementById(hoverLineId);
+    const tooltip = document.getElementById(tooltipId);
+    if (!svg || !hoverLine || !tooltip) return;
+
+    svg.addEventListener('mousemove', function(e) {
+      const snap = getSnapFn();
+      const data = getDataFn();
+      const rect = svg.getBoundingClientRect();
+      const xSvg = ((e.clientX - rect.left) / rect.width) * 100;
+
+      let nearestIdx = 0, nearestDist = Infinity;
+      snap.forEach((x, i) => { const d = Math.abs(xSvg - x); if (d < nearestDist) { nearestDist = d; nearestIdx = i; } });
+
+      const lineX = snap[nearestIdx];
+      hoverLine.setAttribute('x1', lineX); hoverLine.setAttribute('x2', lineX);
+      hoverLine.style.display = '';
+
+      tooltip.innerHTML = buildHTML(data[nearestIdx]);
+      tooltip.style.display = 'block';
+
+      const linePixel = (lineX / 100) * rect.width;
+      const left = linePixel + tooltip.offsetWidth + 12 > rect.width
+        ? linePixel - tooltip.offsetWidth - 8 : linePixel + 8;
+      tooltip.style.left = Math.max(0, left) + 'px';
+    });
+
+    svg.addEventListener('mouseleave', function() {
+      hoverLine.style.display = 'none';
+      tooltip.style.display = 'none';
+    });
+  }
+
+  function capacityTooltipHTML(d) {
+    const prefix = d.period || 'Day';
+    return `<div class="chart-tooltip-week">${prefix} ${d.label}</div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch" style="background:#4a4f58;border-radius:2px"></span><span class="chart-tooltip-label">Gross capacity</span><span class="chart-tooltip-value">${d.gross}</span></div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch line" style="background:#6ad2ff"></span><span class="chart-tooltip-label">Delivery capacity</span><span class="chart-tooltip-value">${d.delivery}</span></div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch line" style="background:#e24856"></span><span class="chart-tooltip-label">Scheduled</span><span class="chart-tooltip-value">${d.scheduled}</span></div>`;
+  }
+
+  function utilTooltipHTML(d) {
+    const prefix = d.period || 'Day';
+    return `<div class="chart-tooltip-week">${prefix} ${d.label}</div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch line" style="background:#7b7f88"></span><span class="chart-tooltip-label">Delivery capacity</span><span class="chart-tooltip-value">${d.delivery}</span></div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch line" style="background:#6ad2ff"></span><span class="chart-tooltip-label">Utilization</span><span class="chart-tooltip-value">${d.utilization}</span></div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch line" style="background:#e24856"></span><span class="chart-tooltip-label">Billable</span><span class="chart-tooltip-value">${d.billable}</span></div>
+      <div class="chart-tooltip-row"><span class="chart-tooltip-swatch" style="background:#4a4f58;border-radius:2px"></span><span class="chart-tooltip-label">Non-billable</span><span class="chart-tooltip-value">${d.nonBillable}</span></div>`;
+  }
+
+  setupChartHover('capacity-svg','capacity-hover-line','capacity-tooltip',
+    () => capXSnap, () => capHoverData, capacityTooltipHTML);
+  setupChartHover('util-svg','util-hover-line','util-tooltip',
+    () => utilXSnap, () => utilHoverData, utilTooltipHTML);
+
+  // ── Project stage multi-select dropdown ──────────────────────────────────
+  const stageOptions = ['Proposal', 'Likely', 'On track', 'Off track', 'Completed', 'Closed', 'Canceled'];
+  const selectedStages = new Set(['Proposal', 'Likely', 'On track', 'Off track', 'Completed', 'Closed']);
+
+  function renderStageDropdown() {
+    const menu = document.getElementById('stage-dropdown');
+    menu.innerHTML = stageOptions.map(stage => {
+      const checked = selectedStages.has(stage);
+      const checkmark = checked
+        ? `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5l3.5 3.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+        : '';
+      return `<button class="stage-dropdown-item" onclick="toggleStage('${stage}')">
+        <span>${stage}</span>
+        <span class="stage-checkbox ${checked ? 'checked' : ''}">${checkmark}</span>
+      </button>`;
+    }).join('');
+  }
+
+  function updateStageLabel() {
+    const label = document.getElementById('stage-filter-label');
+    const ordered = stageOptions.filter(s => selectedStages.has(s));
+    label.textContent = ordered.length === 0 ? 'None'
+      : ordered.length === stageOptions.length ? 'All'
+      : ordered.join(', ');
+  }
+
+  function toggleStage(stage) {
+    if (selectedStages.has(stage)) { selectedStages.delete(stage); }
+    else { selectedStages.add(stage); }
+    renderStageDropdown();
+    updateStageLabel();
+  }
+
+  function toggleStageDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('stage-dropdown').classList.toggle('open');
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.stage-filter-wrap')) {
+      ['stage-dropdown','ptype-dropdown','toff-dropdown'].forEach(function(id){document.getElementById(id).classList.remove('open');});
+      const menu = document.getElementById('stage-dropdown');
+      if (menu) menu.classList.remove('open');
+    }
+  });
+
+  renderStageDropdown();
+  updateStageLabel();
+
+  // Date Range Picker
+  (function() {
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var SHORT_M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var DOW = ['S','M','T','W','T','F','S'];
+    var rangeStart = new Date(2026, 0, 1);
+    var rangeEnd   = new Date(2026, 2, 31);
+    var leftYear = 2026, leftMon = 0;
+    var rightYear = 2026, rightMon = 2;
+    var picking = false;
+    var trigger    = document.getElementById('dp-trigger');
+    var popup      = document.getElementById('dp-popup');
+    var preset     = document.getElementById('dp-preset');
+    var leftEl     = document.getElementById('dp-left');
+    var rightEl    = document.getElementById('dp-right');
+    var rangeText  = document.getElementById('dp-range-text');
+
+    function fmt(d) {
+      return String(d.getDate()).padStart(2,'0') + ' ' + SHORT_M[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    function renderCal(container, year, mon, calId) {
+      var today = new Date(); today.setHours(0,0,0,0);
+      var fd = new Date(year, mon, 1).getDay();
+      var dim = new Date(year, mon + 1, 0).getDate();
+      var h = '<div class="dp-cal-header">'
+        + '<button class="dp-cal-nav" data-cal="' + calId + '" data-dir="-1">&#x2039;</button>'
+        + '<div class="dp-cal-title"><span>' + MONTHS[mon] + '</span><span>' + year + '</span></div>'
+        + '<button class="dp-cal-nav" data-cal="' + calId + '" data-dir="1">&#x203A;</button>'
+        + '</div><div class="dp-grid">';
+      DOW.forEach(function(d) { h += '<div class="dp-dow">' + d + '</div>'; });
+      for (var i = 0; i < fd; i++) h += '<div class="dp-cell empty"></div>';
+      for (var day = 1; day <= dim; day++) {
+        var d = new Date(year, mon, day);
+        var col = (fd + day - 1) % 7;
+        var inR = rangeStart && rangeEnd && d >= rangeStart && d <= rangeEnd;
+        var isS = rangeStart && d.getTime() === rangeStart.getTime();
+        var isE = rangeEnd   && d.getTime() === rangeEnd.getTime();
+        var isT = d.getTime() === today.getTime();
+        var cls = 'dp-cell';
+        if (inR) {
+          cls += ' in-range';
+          var rs = col === 0 || isS || day === 1;
+          var re = col === 6 || isE || day === dim;
+          if (rs && re) cls += ' row-only';
+          else if (rs) cls += ' row-start';
+          else if (re) cls += ' row-end';
+        }
+        if (isS) cls += ' range-start';
+        if (isE) cls += ' range-end';
+        if (isT) cls += ' today';
+        h += '<div class="' + cls + '" data-y="' + year + '" data-m="' + mon + '" data-d="' + day + '"><span class="dp-num">' + day + '</span></div>';
+      }
+      h += '</div>';
+      container.innerHTML = h;
+
+      container.querySelectorAll('.dp-cal-nav').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var cal = this.dataset.cal, dir = parseInt(this.dataset.dir);
+          if (cal === 'left') {
+            leftMon += dir;
+            if (leftMon < 0)  { leftMon = 11; leftYear--; }
+            if (leftMon > 11) { leftMon = 0;  leftYear++; }
+            if (leftYear > rightYear || (leftYear === rightYear && leftMon >= rightMon)) {
+              rightMon = leftMon + 1; rightYear = leftYear;
+              if (rightMon > 11) { rightMon = 0; rightYear++; }
+            }
+          } else {
+            rightMon += dir;
+            if (rightMon < 0)  { rightMon = 11; rightYear--; }
+            if (rightMon > 11) { rightMon = 0;  rightYear++; }
+            if (rightYear < leftYear || (rightYear === leftYear && rightMon <= leftMon)) {
+              leftMon = rightMon - 1; leftYear = rightYear;
+              if (leftMon < 0) { leftMon = 11; leftYear--; }
+            }
+          }
+          renderBoth();
+        });
+      });
+
+      container.querySelectorAll('[data-d]').forEach(function(cell) {
+        cell.addEventListener('click', function() {
+          var y = +this.dataset.y, m = +this.dataset.m, day2 = +this.dataset.d;
+          var clicked = new Date(y, m, day2);
+          if (!picking) {
+            rangeStart = clicked; rangeEnd = null; picking = true;
+          } else {
+            if (clicked < rangeStart) { rangeEnd = rangeStart; rangeStart = clicked; }
+            else rangeEnd = clicked;
+            picking = false;
+            leftYear = rangeStart.getFullYear(); leftMon = rangeStart.getMonth();
+            rightYear = rangeEnd.getFullYear(); rightMon = rangeEnd.getMonth();
+            if (leftYear === rightYear && leftMon === rightMon) {
+              rightMon++; if (rightMon > 11) { rightMon = 0; rightYear++; }
+            }
+            rangeText.textContent = fmt(rangeStart) + ' \u2013 ' + fmt(rangeEnd);
+          }
+          renderBoth();
+        });
+      });
+    }
+
+    function renderBoth() {
+      renderCal(leftEl, leftYear, leftMon, 'left');
+      renderCal(rightEl, rightYear, rightMon, 'right');
+    }
+
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var open = popup.classList.toggle('open');
+      trigger.classList.toggle('active', open);
+      if (open) renderBoth();
+    });
+
+    document.addEventListener('click', function() {
+      popup.classList.remove('open');
+      trigger.classList.remove('active');
+      picking = false;
+    });
+
+    popup.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    preset.addEventListener('change', function() {
+      var now = new Date(); now.setHours(0,0,0,0);
+      var y = now.getFullYear(), m = now.getMonth(), q = Math.floor(m / 3);
+      var v = this.value;
+      if (v === 'this-quarter')  { rangeStart = new Date(y, q*3, 1); rangeEnd = new Date(y, q*3+3, 0); }
+      else if (v === 'last-quarter') { var lq=q===0?3:q-1, ly=q===0?y-1:y; rangeStart=new Date(ly,lq*3,1); rangeEnd=new Date(ly,lq*3+3,0); }
+      else if (v === 'this-month')   { rangeStart = new Date(y, m, 1); rangeEnd = new Date(y, m+1, 0); }
+      else if (v === 'last-month')   { rangeStart = new Date(y, m-1, 1); rangeEnd = new Date(y, m, 0); }
+      else if (v === 'this-year')    { rangeStart = new Date(y, 0, 1); rangeEnd = new Date(y, 11, 31); }
+      leftYear = rangeStart.getFullYear(); leftMon = rangeStart.getMonth();
+      rightYear = rangeEnd.getFullYear(); rightMon = rangeEnd.getMonth();
+      if (leftYear === rightYear && leftMon === rightMon) { rightMon++; if (rightMon > 11) { rightMon=0; rightYear++; } }
+      rangeText.textContent = fmt(rangeStart) + ' \u2013 ' + fmt(rangeEnd);
+      renderBoth(); picking = false;
+    });
+  })();
+
+  // Filter dropdown
+  (function() {
+    var btn = document.getElementById('filter-btn');
+    var dd  = document.getElementById('filter-dropdown');
+    var search = document.getElementById('filter-search');
+    if (!btn || !dd) return;
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dd.classList.toggle('open');
+      if (dd.classList.contains('open')) { search.focus(); }
+    });
+
+    document.addEventListener('click', function() { dd.classList.remove('open'); });
+    dd.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    search.addEventListener('input', function() {
+      var q = this.value.toLowerCase();
+      document.querySelectorAll('#filter-items .filter-item').forEach(function(item) {
+        var match = item.textContent.toLowerCase().includes(q);
+        item.style.display = match ? '' : 'none';
+      });
+      // hide separators if both adjacent sections are empty
+      document.querySelectorAll('#filter-items .filter-sep').forEach(function(sep) {
+        var prev = sep.previousElementSibling;
+        var next = sep.nextElementSibling;
+        var prevHidden = !prev || prev.style.display === 'none' || prev.classList.contains('filter-sep');
+        var nextHidden = !next || next.style.display === 'none' || next.classList.contains('filter-sep');
+        sep.style.display = (prevHidden || nextHidden) ? 'none' : '';
+      });
+    });
+  })();
+  // Person type hero filter
+  const ptypeOptions = ['Employee', 'Contractor', 'Placeholder', 'Unassigned role'];
+  const selectedPtypes = new Set(ptypeOptions);
+
+  function renderPtypeDropdown() {
+    const menu = document.getElementById('ptype-dropdown');
+    menu.innerHTML = ptypeOptions.map(opt => {
+      const checked = selectedPtypes.has(opt);
+      return `<button class="stage-dropdown-item" onclick="togglePtype('${opt}')">
+        ${opt}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="opacity:${checked?1:0};color:var(--accent)"><path d="M3 8l4 4 6-6"/></svg>
+      </button>`;
+    }).join('');
+    updatePtypeLabel();
+  }
+
+  function updatePtypeLabel() {
+    const label = document.getElementById('ptype-filter-label');
+    const ordered = ptypeOptions.filter(s => selectedPtypes.has(s));
+    label.textContent = ordered.length === 0 ? ': None'
+      : ordered.length === ptypeOptions.length ? ': All'
+      : ': ' + (ordered.length <= 2 ? ordered.join(', ') : ordered.length + ' selected');
+  }
+
+  function togglePtype(opt) {
+    if (selectedPtypes.has(opt)) { selectedPtypes.delete(opt); }
+    else { selectedPtypes.add(opt); }
+    renderPtypeDropdown();
+  }
+
+  // Time off hero filter
+  const toffOptions = ['Paid time off', 'Parental leave', 'Public holiday', 'Sick leave', 'Annual leave'];
+  const selectedToff = new Set(toffOptions);
+
+  function renderToffDropdown() {
+    const menu = document.getElementById('toff-dropdown');
+    menu.innerHTML = toffOptions.map(opt => {
+      const checked = selectedToff.has(opt);
+      return `<button class="stage-dropdown-item" onclick="toggleToff('${opt}')">
+        ${opt}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="opacity:${checked?1:0};color:var(--accent)"><path d="M3 8l4 4 6-6"/></svg>
+      </button>`;
+    }).join('');
+    updateToffLabel();
+  }
+
+  function updateToffLabel() {
+    const label = document.getElementById('toff-filter-label');
+    const ordered = toffOptions.filter(s => selectedToff.has(s));
+    label.textContent = ordered.length === 0 ? ': None'
+      : ordered.length === toffOptions.length ? ': All'
+      : ': ' + (ordered.length <= 2 ? ordered.join(', ') : ordered.length + ' selected');
+  }
+
+  function toggleToff(opt) {
+    if (selectedToff.has(opt)) { selectedToff.delete(opt); }
+    else { selectedToff.add(opt); }
+    renderToffDropdown();
+  }
+
+  // Shared toggle for hero dropdowns
+  function toggleHeroDropdown(id, e) {
+    e.stopPropagation();
+    ['ptype-dropdown','toff-dropdown','stage-dropdown'].forEach(function(did) {
+      if (did !== id) document.getElementById(did).classList.remove('open');
+    });
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  renderPtypeDropdown();
+  renderToffDropdown();
+
+  // Donut segment tooltips
+  (function() {
+    var tip    = document.getElementById('donut-tip');
+    var tTitle = document.getElementById('donut-tip-title');
+    var tL1    = document.getElementById('donut-tip-l1');
+    var tV1    = document.getElementById('donut-tip-v1');
+    var tL2    = document.getElementById('donut-tip-l2');
+    var tV2    = document.getElementById('donut-tip-v2');
+    if (!tip) return;
+
+    function moveTip(e) {
+      var x = e.clientX + 16, y = e.clientY + 16;
+      var tw = tip.offsetWidth, th = tip.offsetHeight;
+      if (x + tw > window.innerWidth  - 8) x = e.clientX - tw - 16;
+      if (y + th > window.innerHeight - 8) y = e.clientY - th - 16;
+      tip.style.left = x + 'px';
+      tip.style.top  = y + 'px';
+    }
+
+    function hideTip() { tip.classList.remove('visible'); }
+
+    // People types – filled path segments
+    document.querySelectorAll('#donut-people-svg .donut-segment').forEach(function(seg) {
+      seg.addEventListener('mouseenter', function(e) {
+        var d = seg.dataset;
+        tTitle.textContent = d.count ? d.label + ' (' + d.count + ')' : d.label;
+        tL1.textContent = d.b1Label || ''; tV1.textContent = d.b1Val || '';
+        tL2.textContent = d.b2Label || ''; tV2.textContent = d.b2Val || '';
+        tip.classList.add('visible'); moveTip(e);
+      });
+      seg.addEventListener('mousemove', moveTip);
+      seg.addEventListener('mouseleave', hideTip);
+    });
+
+    // Time offs – geometry-based hover (overlapping stroke rings)
+    var timeoffSvg = document.getElementById('donut-timeoff-svg');
+    if (timeoffSvg) {
+      var C = 2 * Math.PI * 103;
+      var segs = [
+        { label:'Paid time off',     b1Label:'People',     b1Val:'18',       b2Label:'Avg duration', b2Val:'1.1 days',  startArc:0,     arcLen:191.7 },
+        { label:'Parental leave',    b1Label:'People',     b1Val:'3',        b2Label:'Avg duration', b2Val:'4.0 days',  startArc:195.7, arcLen:115.0 },
+        { label:'Public holiday',    b1Label:'Days',       b1Val:'15 days',  b2Label:'Impact',       b2Val:'All staff', startArc:314.7, arcLen:143.8 },
+        { label:'Sick leave',        b1Label:'People',     b1Val:'7',        b2Label:'Avg duration', b2Val:'1.1 days',  startArc:462.5, arcLen:76.7  },
+        { label:'Annual leave',      b1Label:'People',     b1Val:'5',        b2Label:'Avg duration', b2Val:'1.2 days',  startArc:543.2, arcLen:57.5  },
+        { label:'+2 time off types', b1Label:'Days total', b1Val:'4 days',   b2Label:'Types',        b2Val:'2',         startArc:604.7, arcLen:38.3  },
+      ];
+      segs.forEach(function(s) {
+        s.startDeg = (s.startArc / C) * 360;
+        s.endDeg   = ((s.startArc + s.arcLen) / C) * 360;
+      });
+      timeoffSvg.addEventListener('mousemove', function(e) {
+        var rect = timeoffSvg.getBoundingClientRect();
+        var dx = e.clientX - rect.left - 119, dy = e.clientY - rect.top - 119;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 87 || dist > 119) { hideTip(); return; }
+        var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+        var found = null;
+        for (var i = 0; i < segs.length; i++) {
+          if (deg >= segs[i].startDeg && deg <= segs[i].endDeg) { found = segs[i]; break; }
+        }
+        if (found) {
+          tTitle.textContent = found.label;
+          tL1.textContent = found.b1Label; tV1.textContent = found.b1Val;
+          tL2.textContent = found.b2Label; tV2.textContent = found.b2Val;
+          tip.classList.add('visible'); moveTip(e);
+        } else hideTip();
+      });
+      timeoffSvg.addEventListener('mouseleave', hideTip);
+    }
+  })();
+
+</script>
+
+  <div class="donut-tip" id="donut-tip"><div class="donut-tip-title" id="donut-tip-title"></div><div class="donut-tip-row" id="donut-tip-r1"><span class="donut-tip-row-label" id="donut-tip-l1"></span><span class="donut-tip-row-dots"></span><span class="donut-tip-row-val" id="donut-tip-v1"></span></div><div class="donut-tip-row" id="donut-tip-r2"><span class="donut-tip-row-label" id="donut-tip-l2"></span><span class="donut-tip-row-dots"></span><span class="donut-tip-row-val" id="donut-tip-v2"></span></div></div>
+</body>
+</html>

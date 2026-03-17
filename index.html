@@ -142,7 +142,7 @@
     .info-tooltip { position: fixed; width: 420px; background: #1e2129; border: 1px solid #43474f; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: normal; }
     .info-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #43474f; }
     .info-tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1e2129; margin-top: -1px; z-index: 1; }
-    .chart-header-info:hover .info-tooltip { opacity: 1; }
+    /* chart-header-info tooltip shown via JS */
     .action-tooltip-wrap { position: relative; }
     .action-tooltip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e2129; border: 1px solid #43474f; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: var(--text); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
     .action-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #43474f; }
@@ -1121,33 +1121,31 @@
   renderPtypeDropdown();
   renderToffDropdown();
 
-  // KPI info-btn tooltips (fixed position to escape overflow clipping)
+  // All info-tooltips – fixed position to escape overflow clipping
   (function() {
-    var active = null;
-    document.querySelectorAll('.kpi-info-btn').forEach(function(btn) {
+    document.querySelectorAll('.kpi-info-btn, .chart-header-info').forEach(function(btn) {
       var tip = btn.querySelector('.info-tooltip');
       if (!tip) return;
       tip.style.display = 'block';
       tip.style.opacity = '0';
       tip.style.pointerEvents = 'none';
 
-      btn.addEventListener('mouseenter', function() {
+      function show() {
         var r = btn.getBoundingClientRect();
         var tipW = 420;
         var left = r.left + r.width / 2 - tipW / 2;
-        // clamp so it stays within viewport
         left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
-        var top = r.top - 10; // will be positioned above via transform
+        // position above, then recalc with actual height
         tip.style.left = left + 'px';
-        tip.style.top = (r.top - tip.offsetHeight - 10) + 'px';
-        tip.style.opacity = '1';
-        active = tip;
-      });
-
-      btn.addEventListener('mouseleave', function() {
+        tip.style.top = '-9999px';
         tip.style.opacity = '0';
-        active = null;
-      });
+        var h = tip.offsetHeight;
+        tip.style.top = (r.top - h - 10) + 'px';
+        tip.style.opacity = '1';
+      }
+
+      btn.addEventListener('mouseenter', show);
+      btn.addEventListener('mouseleave', function() { tip.style.opacity = '0'; });
     });
   })();
 
